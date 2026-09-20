@@ -40,22 +40,26 @@ mixture = bell1 + bell2
 
 fig, ax = plt.subplots(figsize=(10, 6))
 
-# Mô hình GMM kết quả (tím) - vẽ nền dày để thấy rõ dưới 2 chuông
-ax.fill_between(grid, mixture, color="purple", alpha=0.20)
-ax.plot(grid, mixture, color="purple", lw=5, alpha=0.9,
+# Mô hình GMM kết quả (tím) - đường dày, liền nét
+ax.plot(grid, mixture, color="purple", lw=3.5, alpha=0.9,
         label="GMM (hỗn hợp 2 chuông)")
 
-# Chuông 1 (đỏ) và chuông 2 (xanh)
-ax.fill_between(grid, bell1, color="red", alpha=0.35)
+# Chuông 1 (đỏ, nét đứt) và chuông 2 (xanh, nét gạch-chấm)
 ax.plot(grid, bell1, color="red", lw=2, ls="--",
-        label=f"Chuông 1 (μ={means[0]:.2f}, σ={stds[0]:.2f})")
-ax.fill_between(grid, bell2, color="blue", alpha=0.35)
-ax.plot(grid, bell2, color="blue", lw=2, ls="--",
-        label=f"Chuông 2 (μ={means[1]:.2f}, σ={stds[1]:.2f})")
+        label=f"Chuông 1 (μ={means[0]:.2f}, σ={stds[0]:.2f}, π={weights[0]:.2f})")
+ax.plot(grid, bell2, color="blue", lw=2, ls="-.",
+        label=f"Chuông 2 (μ={means[1]:.2f}, σ={stds[1]:.2f}, π={weights[1]:.2f})")
 
-# Các điểm dữ liệu trên trục X: mỗi chấm = 1 bài hát
-ax.scatter(X.ravel(), np.zeros_like(X.ravel()), s=60, color="black",
-           zorder=5, clip_on=False, label="Mỗi chấm tương ứng 1 bài nhạc")
+# Đánh dấu tâm mỗi chuông
+ax.axvline(means[0], color="red", lw=1, ls=":", alpha=0.6)
+ax.axvline(means[1], color="blue", lw=1, ls=":", alpha=0.6)
+
+# Các điểm dữ liệu trên trục X: mỗi chấm = 1 bài hát, tô theo cụm được gán
+colors = np.where(df["cum"].to_numpy() == 1, "red", "blue")
+ax.scatter(X.ravel(), np.zeros_like(X.ravel()), s=60, c=colors,
+           edgecolors="black", linewidths=0.6, zorder=5, clip_on=False)
+ax.scatter([], [], s=60, c="dimgray", edgecolors="black", linewidths=0.6,
+           label="Mỗi chấm tương ứng 1 bài nhạc")
 
 ax.set_xlabel("điểm sôi động", fontsize=12)
 ax.set_ylabel("mật độ xác suất", fontsize=12)
