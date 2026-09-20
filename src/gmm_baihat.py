@@ -1,13 +1,17 @@
 """GMM 2 cụm trên cột diemSoiDong của data/BaiHat.csv."""
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.mixture import GaussianMixture
 
+ROOT = Path(__file__).resolve().parent.parent  # thư mục gốc của repo
+
 # ---------- Phần 1: Huấn luyện GMM với 2 cụm ----------
 
-df = pd.read_csv("data/BaiHat.csv")
+df = pd.read_csv(ROOT / "data" / "BaiHat.csv")
 X = df[["diemSoiDong"]].to_numpy()  # tập X 1 chiều, shape (n, 1)
 
 gmm = GaussianMixture(n_components=2, covariance_type="full", random_state=0)
@@ -68,5 +72,7 @@ ax.set_ylim(bottom=0)
 ax.legend()
 ax.spines[["top", "right"]].set_visible(False)
 fig.tight_layout()
-fig.savefig("gmm_baihat.png", dpi=150)
+out_path = ROOT / "gmm_baihat.png"
+fig.savefig(out_path, dpi=150)
+print(f"Đã lưu biểu đồ: {out_path}")
 plt.show()
