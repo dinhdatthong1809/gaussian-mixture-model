@@ -62,12 +62,9 @@ ax.axvline(means[1], color="blue", lw=1, ls=":", alpha=0.6)
 colors = np.where(df["cum"].to_numpy() == 1, "red", "blue")
 ax.scatter(X.ravel(), np.zeros_like(X.ravel()), s=60, c=colors,
            edgecolors="black", linewidths=0.6, zorder=5, clip_on=False)
-ax.scatter([], [], s=60, c="dimgray", edgecolors="black", linewidths=0.6,
-           label="Mỗi chấm tương ứng 1 bài nhạc")
 
-ax.set_xlabel("điểm sôi động", fontsize=12)
-ax.set_ylabel("mật độ xác suất", fontsize=12)
-ax.set_title("GMM 2 cụm trên điểm sôi động của các bài hát", fontsize=13)
+ax.set_xlabel("Điểm sôi động - Mỗi chấm tròn tương ứng điểm sôi động của một bài hát", fontsize=12)
+ax.set_ylabel("Mật độ xác suất", fontsize=12)
 ax.set_ylim(bottom=0)
 ax.legend()
 ax.spines[["top", "right"]].set_visible(False)
