@@ -10,4 +10,7 @@ pip3 install -r requirements.txt
 
 # 3. Chạy
 python3 src/gmm_baihat.py
+
+# 4. Xem vì sao chỉ dùng K-Means + tính mean/std là chưa đủ
+python3 src/kmeans_vs_gmm.py
 ```
