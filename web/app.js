@@ -781,10 +781,12 @@
         "<b>Khởi tạo cụm</b>.</p>";
       return;
     }
-    var html = "<table><thead><tr><th>Cụm</th><th>π</th>";
+    var html = "<table><thead><tr><th>Cụm</th>" +
+               "<th>π<small>trọng số</small></th>";
     html += state.dim === "1d"
-      ? "<th>μ</th><th>σ</th>"
-      : "<th>μx</th><th>μy</th><th>σx</th><th>σy</th>";
+      ? "<th>μ<small>tâm cụm</small></th><th>σ<small>độ lệch chuẩn</small></th>"
+      : "<th>μx<small>tâm cụm</small></th><th>μy<small>tâm cụm</small></th>" +
+        "<th>σx<small>độ lệch chuẩn</small></th><th>σy<small>độ lệch chuẩn</small></th>";
     html += "</tr></thead><tbody>";
     for (var j = 0; j < state.k; j++) {
       html += "<tr><td><span class='swatch' style='background:" + PALETTE[j] + "'></span>" +
@@ -806,19 +808,12 @@
 
   function updateHints() {
     var hint = document.getElementById("hint");
-    var note = document.getElementById("view-note");
     if (state.dim === "1d") {
       hint.textContent = "Nhấp vào vùng biểu đồ để thêm điểm dữ liệu quanh vị trí trục X đó.";
-      note.textContent = state.view === "ellipse"
-        ? "Với dữ liệu 1D, “khoanh vùng” hiển thị mỗi cụm bằng dải μ ± 1σ và μ ± 2σ."
-        : "Với dữ liệu 1D, “đèo núi” là các đường chuông của từng cụm cùng đường mật độ GMM.";
+    } else if (state.view === "ellipse") {
+      hint.textContent = "Nhấp vào lưới để thêm điểm dữ liệu quanh vị trí đó.";
     } else {
-      hint.textContent = state.view === "ellipse"
-        ? "Nhấp vào lưới để thêm điểm dữ liệu quanh vị trí đó."
-        : "Nhấp lên mặt sàn để thêm điểm; độ cao của núi chính là mật độ xác suất của GMM.";
-      note.textContent = state.view === "ellipse"
-        ? "Mỗi cụm là 3 vòng ellipse ứng với 1σ, 2σ, 3σ — hướng và độ dẹt lấy từ ma trận hiệp phương sai."
-        : "Mặt mật độ của GMM dựng 3D giả: hai cụm chồng lấn sẽ nối nhau thành một “đèo” ở giữa.";
+      hint.textContent = "Nhấp lên mặt sàn để thêm điểm; độ cao của núi chính là mật độ xác suất của GMM.";
     }
   }
 

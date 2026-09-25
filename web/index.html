@@ -12,6 +12,13 @@
 
 <div class="layout">
   <div class="canvas-box">
+    <div class="canvas-toolbar">
+      <span class="toolbar-label">Cách biểu thị mô hình</span>
+      <div class="seg" id="seg-view">
+        <button data-value="ellipse" class="active">Khoanh vùng ellipse</button>
+        <button data-value="mountain">Đồ thị đèo núi</button>
+      </div>
+    </div>
     <canvas id="canvas" width="720" height="720"></canvas>
     <p class="hint" id="hint"></p>
   </div>
@@ -42,16 +49,7 @@
     </section>
 
     <section>
-      <h2>2. Cách biểu thị mô hình</h2>
-      <div class="seg" id="seg-view">
-        <button data-value="ellipse" class="active">Khoanh vùng ellipse</button>
-        <button data-value="mountain">Đồ thị đèo núi</button>
-      </div>
-      <p class="note" id="view-note"></p>
-    </section>
-
-    <section>
-      <h2>3. Huấn luyện (thuật toán EM)</h2>
+      <h2>2. Huấn luyện (thuật toán EM)</h2>
       <label class="row">
         <span>Số cụm</span>
         <select id="n-clusters">
@@ -76,9 +74,9 @@
     </section>
 
     <section>
-      <h2>4. Trạng thái mô hình</h2>
+      <h2>3. Trạng thái mô hình</h2>
       <div class="status">
-        <div><span>Số điểm</span><b id="stat-n">0</b></div>
+        <div><span>Số datapoint</span><b id="stat-n">0</b></div>
         <div><span>Vòng lặp</span><b id="stat-iter">0</b></div>
         <div><span>Log-likelihood TB</span><b id="stat-ll">—</b></div>
       </div>
@@ -87,13 +85,15 @@
     </section>
 
     <section class="legend">
-      <h2>Chú thích</h2>
+      <details id="legend-details" open>
+        <summary><h2>Chú thích</h2><span class="chevron">▾</span></summary>
       <ul>
         <li>Mỗi <b>chấm tròn</b> là một điểm dữ liệu; màu chấm là pha trộn màu các cụm theo <b>xác suất thuộc cụm</b> (gán mềm). Chấm ở vùng chồng lấn có màu lửng lơ giữa 2 cụm.</li>
         <li><b>Bước E</b>: tính xác suất mỗi điểm thuộc từng cụm với tham số hiện tại.</li>
         <li><b>Bước M</b>: cập nhật π (tỉ lệ), μ (kỳ vọng), Σ/σ (độ lệch) từ các xác suất đó.</li>
         <li>Một <b>vòng lặp</b> = 1 bước E + 1 bước M. Log-likelihood luôn tăng dần tới khi hội tụ.</li>
       </ul>
+      </details>
     </section>
   </div>
 </div>
