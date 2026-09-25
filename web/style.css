@@ -19,6 +19,24 @@ body {
   font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+.lang-bar {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 1104px;
+  margin: 0 auto 10px;
+}
+
+.lang-bar .seg {
+  margin-bottom: 0;
+  width: auto;
+}
+
+.lang-bar .seg button {
+  flex: none;
+  padding: 6px 14px;
+  font-size: 12.5px;
+}
+
 h1 {
   margin: 0 0 6px;
   text-align: center;

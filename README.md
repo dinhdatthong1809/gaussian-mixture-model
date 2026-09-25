@@ -27,6 +27,7 @@ xdg-open web/index.html        # macOS: open web/index.html
 python3 -m http.server 8000    # rồi mở http://localhost:8000/web/
 ```
 
-Trong app có thể chọn dữ liệu **1D hoặc 2D**, chọn cách biểu thị mô hình là
+Giao diện có nút chuyển **English / Tiếng Việt** ở góc trên bên phải (mặc định
+tiếng Anh, lựa chọn được nhớ lại ở lần mở sau). Trong app có thể chọn dữ liệu **1D hoặc 2D**, chọn cách biểu thị mô hình là
 **khoanh vùng ellipse** hoặc **đồ thị đèo núi**, nhấp chuột để thêm điểm, và
 chạy thuật toán EM từng bước (bước E / bước M / tự động chạy).

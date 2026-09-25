@@ -1,22 +1,29 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mô phỏng Gaussian Mixture Model</title>
+<title>Gaussian Mixture Model Demo</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Mô phỏng Gaussian Mixture Model (GMM)</h1>
-<p class="sub">Nhấp chuột lên biểu đồ để thêm dữ liệu, rồi chạy thuật toán EM từng bước để xem mô hình khớp dần vào dữ liệu.</p>
+<div class="lang-bar">
+  <div class="seg" id="seg-lang">
+    <button data-value="en" class="active">English</button>
+    <button data-value="vi">Tiếng Việt</button>
+  </div>
+</div>
+
+<h1 data-i18n="app.title">Gaussian Mixture Model (GMM) Demo</h1>
+<p class="sub" data-i18n="app.sub"></p>
 
 <div class="layout">
   <div class="canvas-box">
     <div class="canvas-toolbar">
-      <span class="toolbar-label">Cách biểu thị mô hình</span>
+      <span class="toolbar-label" data-i18n="toolbar.view"></span>
       <div class="seg" id="seg-view">
-        <button data-value="ellipse" class="active">Khoanh vùng ellipse</button>
-        <button data-value="mountain">Đồ thị đèo núi</button>
+        <button data-value="ellipse" class="active" data-i18n="view.ellipse"></button>
+        <button data-value="mountain" data-i18n="view.mountain"></button>
       </div>
     </div>
     <canvas id="canvas" width="720" height="720"></canvas>
@@ -25,60 +32,60 @@
 
   <div class="panel">
     <section>
-      <h2>1. Dữ liệu</h2>
+      <h2 data-i18n="sec.data"></h2>
       <div class="seg" id="seg-dim">
-        <button data-value="1d">1 chiều (1D)</button>
-        <button data-value="2d" class="active">2 chiều (2D)</button>
+        <button data-value="1d" data-i18n="dim.1d"></button>
+        <button data-value="2d" class="active" data-i18n="dim.2d"></button>
       </div>
       <label class="row">
-        <span>Mỗi lần nhấp thêm</span>
+        <span data-i18n="data.perClick"></span>
         <select id="points-per-click">
           <option>1</option><option>5</option><option>10</option>
           <option selected>20</option><option>50</option>
         </select>
-        <span>điểm</span>
+        <span data-i18n="data.points"></span>
       </label>
       <label class="row">
-        <span>Độ phân tán khi nhấp</span>
+        <span data-i18n="data.spread"></span>
         <input type="range" id="spread" min="5" max="120" value="35">
       </label>
       <div class="btn-row">
-        <button id="btn-sample" class="ghost">Dữ liệu mẫu</button>
-        <button id="btn-clear" class="ghost danger">Xoá hết</button>
+        <button id="btn-sample" class="ghost" data-i18n="btn.sample"></button>
+        <button id="btn-clear" class="ghost danger" data-i18n="btn.clear"></button>
       </div>
     </section>
 
     <section>
-      <h2>2. Huấn luyện (thuật toán EM)</h2>
+      <h2 data-i18n="sec.train"></h2>
       <label class="row">
-        <span>Số cụm</span>
+        <span data-i18n="train.clusters"></span>
         <select id="n-clusters">
           <option>1</option><option>2</option><option selected>3</option>
           <option>4</option><option>5</option>
         </select>
       </label>
       <div class="btn-row">
-        <button id="btn-init">Khởi tạo cụm</button>
+        <button id="btn-init" data-i18n="btn.init"></button>
       </div>
       <div class="btn-row">
-        <button id="btn-e">Bước E (gán mềm)</button>
-        <button id="btn-m">Bước M (cập nhật)</button>
+        <button id="btn-e" data-i18n="btn.e"></button>
+        <button id="btn-m" data-i18n="btn.m"></button>
       </div>
       <div class="btn-row">
-        <button id="btn-1">Chạy 1 vòng lặp</button>
-        <button id="btn-10">Chạy 10 vòng lặp</button>
+        <button id="btn-1" data-i18n="btn.run1"></button>
+        <button id="btn-10" data-i18n="btn.run10"></button>
       </div>
       <div class="btn-row">
-        <button id="btn-auto" class="primary">▶ Tự động chạy</button>
+        <button id="btn-auto" class="primary"></button>
       </div>
     </section>
 
     <section>
-      <h2>3. Trạng thái mô hình</h2>
+      <h2 data-i18n="sec.status"></h2>
       <div class="status">
-        <div><span>Số datapoint</span><b id="stat-n">0</b></div>
-        <div><span>Vòng lặp</span><b id="stat-iter">0</b></div>
-        <div><span>Log-likelihood TB</span><b id="stat-ll">—</b></div>
+        <div><span data-i18n="stat.n"></span><b id="stat-n">0</b></div>
+        <div><span data-i18n="stat.iter"></span><b id="stat-iter">0</b></div>
+        <div><span data-i18n="stat.ll"></span><b id="stat-ll">—</b></div>
       </div>
       <div id="params"></div>
       <p class="note" id="message"></p>
@@ -86,12 +93,12 @@
 
     <section class="legend">
       <details id="legend-details">
-        <summary><h2>Chú thích</h2><span class="chevron">▾</span></summary>
+        <summary><h2 data-i18n="sec.legend"></h2><span class="chevron">▾</span></summary>
       <ul>
-        <li>Mỗi <b>chấm tròn</b> là một điểm dữ liệu; màu chấm là pha trộn màu các cụm theo <b>xác suất thuộc cụm</b> (gán mềm). Chấm ở vùng chồng lấn có màu lửng lơ giữa 2 cụm.</li>
-        <li><b>Bước E</b>: tính xác suất mỗi điểm thuộc từng cụm với tham số hiện tại.</li>
-        <li><b>Bước M</b>: cập nhật π (tỉ lệ), μ (kỳ vọng), Σ/σ (độ lệch) từ các xác suất đó.</li>
-        <li>Một <b>vòng lặp</b> = 1 bước E + 1 bước M. Log-likelihood luôn tăng dần tới khi hội tụ.</li>
+        <li data-i18n-html="legend.1"></li>
+        <li data-i18n-html="legend.2"></li>
+        <li data-i18n-html="legend.3"></li>
+        <li data-i18n-html="legend.4"></li>
       </ul>
       </details>
     </section>

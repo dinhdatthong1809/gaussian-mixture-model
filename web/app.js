@@ -29,8 +29,183 @@
     prevLl: null,
     converged: false,
     autoTimer: null,
-    message: ""
+    message: null            // {key, params} để đổi ngôn ngữ vẫn dịch lại được
   };
+
+  function setMessage(key, params) {
+    state.message = key ? { key: key, params: params || null } : null;
+  }
+
+
+  // ------------------------------------------------------------------
+  // Song ngữ (mặc định tiếng Anh)
+  // ------------------------------------------------------------------
+  var STRINGS = {
+    en: {
+      "doc.title": "Gaussian Mixture Model Demo",
+      "app.title": "Gaussian Mixture Model (GMM) Demo",
+      "app.sub": "Click on the chart to add data, then run the EM algorithm step by step and watch the model fit.",
+      "toolbar.view": "Model display",
+      "view.ellipse": "Ellipse contours",
+      "view.mountain": "Mountain plot",
+      "sec.data": "1. Data",
+      "dim.1d": "1 dimension (1D)",
+      "dim.2d": "2 dimensions (2D)",
+      "data.perClick": "Each click adds",
+      "data.points": "point(s)",
+      "data.spread": "Click spread",
+      "btn.sample": "Sample data",
+      "btn.clear": "Clear all",
+      "sec.train": "2. Training (EM algorithm)",
+      "train.clusters": "Clusters",
+      "btn.init": "Initialize clusters",
+      "btn.e": "E step (soft assign)",
+      "btn.m": "M step (update)",
+      "btn.run1": "Run 1 iteration",
+      "btn.run10": "Run 10 iterations",
+      "btn.auto": "\u25b6 Auto run",
+      "btn.stop": "\u23f8 Stop",
+      "sec.status": "3. Model state",
+      "stat.n": "Datapoints",
+      "stat.iter": "Iterations",
+      "stat.ll": "Avg log-likelihood",
+      "sec.legend": "Notes",
+      "legend.1": "Every <b>dot</b> is one datapoint; its colour blends the cluster colours by <b>membership probability</b> (soft assignment). Dots in the overlap get an in-between colour.",
+      "legend.2": "<b>E step</b>: compute how likely each point belongs to each cluster under the current parameters.",
+      "legend.3": "<b>M step</b>: update \u03c0 (weight), \u03bc (mean) and \u03a3/\u03c3 (spread) from those probabilities.",
+      "legend.4": "One <b>iteration</b> = 1 E step + 1 M step. The log-likelihood keeps rising until it converges.",
+      "tbl.cluster": "Cluster",
+      "tbl.weight": "weight",
+      "tbl.center": "center",
+      "tbl.std": "std dev",
+      "tbl.noModel": "No model yet. Add data, then press <b>Initialize clusters</b>.",
+      "axis.x1": "feature X1",
+      "axis.x2": "feature X2",
+      "axis.x2arrow": "feature X2 \u2197",
+      "axis.1d": "feature X1 — every dot is one datapoint",
+      "canvas.height": "height = GMM probability density",
+      "canvas.noModel": "No model yet — press \u201cInitialize clusters\u201d",
+      "canvas.mountain1d": "purple = GMM density (sum of the bells) · dashed = each bell",
+      "canvas.bands1d": "each band = \u03bc ± 1\u03c3 (solid) and \u03bc ± 2\u03c3 (light) of one cluster · grey line = GMM density",
+      "cluster.n": "Cluster {n}",
+      "hint.1d": "Click inside the chart to add datapoints around that position on the X1 axis.",
+      "hint.2dEllipse": "Click on the grid to add datapoints around that position.",
+      "hint.2dMountain": "Click on the floor to add points; the height of the mountains is the GMM probability density.",
+      "msg.added": "New points added — initialize the clusters again.",
+      "msg.sample1d": "Loaded the energy scores of 20 songs (data/BaiHat.csv).",
+      "msg.sample2d": "Loaded 200 sample points drawn from 3 clusters.",
+      "msg.needPoints": "Need at least {k} datapoints.",
+      "msg.initialized": "Initialized {k} clusters. Press \u201cRun 1 iteration\u201d to watch EM work.",
+      "msg.convergedFull": "Converged after {n} iterations (the log-likelihood barely changes).",
+      "msg.converged": "Converged after {n} iterations.",
+      "msg.dimChanged": "Data mode changed — initialize the clusters again.",
+      "msg.kChanged": "Cluster count changed — initialize again.",
+      "msg.cleared": "All data cleared.",
+      "msg.eStep": "E step: recomputed each point's membership probabilities (dot colours changed).",
+      "msg.mStep": "M step: updated \u03c0, \u03bc and the spread of each cluster from those probabilities."
+    },
+    vi: {
+      "doc.title": "Mô phỏng Gaussian Mixture Model",
+      "app.title": "Mô phỏng Gaussian Mixture Model (GMM)",
+      "app.sub": "Nhấp chuột lên biểu đồ để thêm dữ liệu, rồi chạy thuật toán EM từng bước để xem mô hình khớp dần vào dữ liệu.",
+      "toolbar.view": "Cách biểu thị mô hình",
+      "view.ellipse": "Khoanh vùng ellipse",
+      "view.mountain": "Đồ thị đèo núi",
+      "sec.data": "1. Dữ liệu",
+      "dim.1d": "1 chiều (1D)",
+      "dim.2d": "2 chiều (2D)",
+      "data.perClick": "Mỗi lần nhấp thêm",
+      "data.points": "điểm",
+      "data.spread": "Độ phân tán khi nhấp",
+      "btn.sample": "Dữ liệu mẫu",
+      "btn.clear": "Xoá hết",
+      "sec.train": "2. Huấn luyện (thuật toán EM)",
+      "train.clusters": "Số cụm",
+      "btn.init": "Khởi tạo cụm",
+      "btn.e": "Bước E (gán mềm)",
+      "btn.m": "Bước M (cập nhật)",
+      "btn.run1": "Chạy 1 vòng lặp",
+      "btn.run10": "Chạy 10 vòng lặp",
+      "btn.auto": "\u25b6 Tự động chạy",
+      "btn.stop": "\u23f8 Dừng",
+      "sec.status": "3. Trạng thái mô hình",
+      "stat.n": "Số datapoint",
+      "stat.iter": "Vòng lặp",
+      "stat.ll": "Log-likelihood TB",
+      "sec.legend": "Chú thích",
+      "legend.1": "Mỗi <b>chấm tròn</b> là một điểm dữ liệu; màu chấm là pha trộn màu các cụm theo <b>xác suất thuộc cụm</b> (gán mềm). Chấm ở vùng chồng lấn có màu lửng lơ giữa 2 cụm.",
+      "legend.2": "<b>Bước E</b>: tính xác suất mỗi điểm thuộc từng cụm với tham số hiện tại.",
+      "legend.3": "<b>Bước M</b>: cập nhật \u03c0 (tỉ lệ), \u03bc (kỳ vọng), \u03a3/\u03c3 (độ lệch) từ các xác suất đó.",
+      "legend.4": "Một <b>vòng lặp</b> = 1 bước E + 1 bước M. Log-likelihood luôn tăng dần tới khi hội tụ.",
+      "tbl.cluster": "Cụm",
+      "tbl.weight": "trọng số",
+      "tbl.center": "tâm cụm",
+      "tbl.std": "độ lệch chuẩn",
+      "tbl.noModel": "Chưa có mô hình. Thêm dữ liệu rồi bấm <b>Khởi tạo cụm</b>.",
+      "axis.x1": "đặc trưng X1",
+      "axis.x2": "đặc trưng X2",
+      "axis.x2arrow": "đặc trưng X2 \u2197",
+      "axis.1d": "đặc trưng X1 — mỗi chấm tròn là một điểm dữ liệu",
+      "canvas.height": "độ cao = mật độ xác suất của GMM",
+      "canvas.noModel": "Chưa có mô hình — bấm \u201cKhởi tạo cụm\u201d",
+      "canvas.mountain1d": "đường tím = mật độ GMM (tổng các chuông) · đường nét đứt = từng chuông",
+      "canvas.bands1d": "mỗi dải = vùng \u03bc ± 1\u03c3 (đậm) và \u03bc ± 2\u03c3 (nhạt) của một cụm · đường xám = mật độ GMM",
+      "cluster.n": "Cụm {n}",
+      "hint.1d": "Nhấp vào vùng biểu đồ để thêm điểm dữ liệu quanh vị trí trục X1 đó.",
+      "hint.2dEllipse": "Nhấp vào lưới để thêm điểm dữ liệu quanh vị trí đó.",
+      "hint.2dMountain": "Nhấp lên mặt sàn để thêm điểm; độ cao của núi chính là mật độ xác suất của GMM.",
+      "msg.added": "Đã thêm điểm mới — hãy khởi tạo lại cụm.",
+      "msg.sample1d": "Đã nạp điểm sôi động của 20 bài hát (data/BaiHat.csv).",
+      "msg.sample2d": "Đã nạp 200 điểm mẫu từ 3 cụm.",
+      "msg.needPoints": "Cần ít nhất {k} điểm dữ liệu.",
+      "msg.initialized": "Đã khởi tạo {k} cụm. Bấm \u201cChạy 1 vòng lặp\u201d để xem EM làm việc.",
+      "msg.convergedFull": "Đã hội tụ sau {n} vòng lặp (log-likelihood gần như không đổi).",
+      "msg.converged": "Đã hội tụ sau {n} vòng lặp.",
+      "msg.dimChanged": "Đã chuyển chế độ dữ liệu — hãy khởi tạo lại cụm.",
+      "msg.kChanged": "Đã đổi số cụm — hãy khởi tạo lại.",
+      "msg.cleared": "Đã xoá toàn bộ dữ liệu.",
+      "msg.eStep": "Bước E: đã tính lại xác suất thuộc cụm cho từng điểm (màu chấm đổi theo).",
+      "msg.mStep": "Bước M: đã cập nhật \u03c0, \u03bc và độ lệch của từng cụm từ các xác suất vừa tính."
+    }
+  };
+
+  var lang = "en";
+  try {
+    var saved = window.localStorage.getItem("gmm-lang");
+    if (saved === "en" || saved === "vi") lang = saved;
+  } catch (e) { /* localStorage có thể bị chặn */ }
+
+  function t(key, params) {
+    var dict = STRINGS[lang] || STRINGS.en;
+    var text = dict[key];
+    if (text === undefined) text = STRINGS.en[key] !== undefined ? STRINGS.en[key] : key;
+    if (params) {
+      Object.keys(params).forEach(function (k) {
+        text = text.split("{" + k + "}").join(params[k]);
+      });
+    }
+    return text;
+  }
+
+  /* Áp chuỗi cho các phần tử tĩnh có data-i18n / data-i18n-html */
+  function applyStaticI18n() {
+    document.title = t("doc.title");
+    document.documentElement.lang = lang;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
+      el.textContent = t(el.dataset.i18n);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-html]"), function (el) {
+      el.innerHTML = t(el.dataset.i18nHtml);
+    });
+  }
+
+  function setLang(next) {
+    lang = next;
+    try { window.localStorage.setItem("gmm-lang", next); } catch (e) { /* bỏ qua */ }
+    applyStaticI18n();
+    updateHints();
+    render();
+  }
 
   // ------------------------------------------------------------------
   // Tiện ích toán học
@@ -133,7 +308,7 @@
         });
       }
     }
-    resetModel("Đã thêm điểm mới — hãy khởi tạo lại cụm.");
+    resetModel("msg.added");
   }
 
   /* Điểm sôi động của 20 bài hát trong data/BaiHat.csv */
@@ -146,7 +321,7 @@
       state.pts1d = BAI_HAT.map(function (v) {
         return { x: v, jitter: Math.random() };
       });
-      resetModel("Đã nạp điểm sôi động của 20 bài hát (data/BaiHat.csv).");
+      resetModel("msg.sample1d");
     } else {
       var blobs = [
         { x: 3.0, y: 7.0, s: 0.7, n: 60 },
@@ -162,7 +337,7 @@
           });
         }
       });
-      resetModel("Đã nạp 200 điểm mẫu từ 3 cụm.");
+      resetModel("msg.sample2d");
     }
     render();
   }
@@ -170,21 +345,21 @@
   // ------------------------------------------------------------------
   // Thuật toán EM
   // ------------------------------------------------------------------
-  function resetModel(msg) {
+  function resetModel(msgKey) {
     state.model = null;
     state.resp = null;
     state.iter = 0;
     state.ll = null;
     state.prevLl = null;
     state.converged = false;
-    state.message = msg || "";
+    setMessage(msgKey);
   }
 
   function initModel() {
     stopAuto();
     var pts = points();
     if (pts.length < state.k) {
-      state.message = "Cần ít nhất " + state.k + " điểm dữ liệu.";
+      setMessage("msg.needPoints", { k: state.k });
       render();
       return;
     }
@@ -229,7 +404,7 @@
     state.prevLl = null;
     state.converged = false;
     eStep();
-    state.message = "Đã khởi tạo " + state.k + " cụm. Bấm “Chạy 1 vòng lặp” để xem EM làm việc.";
+    setMessage("msg.initialized", { k: state.k });
     render();
   }
 
@@ -326,9 +501,8 @@
     for (var i = 0; i < count; i++) {
       if (!runIteration()) break;
     }
-    state.message = state.converged
-      ? "Đã hội tụ sau " + state.iter + " vòng lặp (log-likelihood gần như không đổi)."
-      : "";
+    if (state.converged) setMessage("msg.convergedFull", { n: state.iter });
+    else setMessage(null);
     render();
   }
 
@@ -339,7 +513,7 @@
     state.autoTimer = setInterval(function () {
       if (!runIteration()) {
         stopAuto();
-        state.message = "Đã hội tụ sau " + state.iter + " vòng lặp.";
+        setMessage("msg.converged", { n: state.iter });
       }
       render();
     }, 220);
@@ -412,19 +586,19 @@
     ctx.strokeStyle = "#eceaea";
     ctx.lineWidth = 1;
     for (var i = 0; i <= 10; i++) {
-      var t = i / 10;
-      var px = PAD + t * (W - 2 * PAD);
-      var py = PAD + t * (H - 2 * PAD);
+      var frac = i / 10;
+      var px = PAD + frac * (W - 2 * PAD);
+      var py = PAD + frac * (H - 2 * PAD);
       ctx.beginPath(); ctx.moveTo(px, PAD); ctx.lineTo(px, H - PAD); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(PAD, py); ctx.lineTo(W - PAD, py); ctx.stroke();
     }
     ctx.strokeStyle = "#cfd6db";
     ctx.strokeRect(PAD, PAD, W - 2 * PAD, H - 2 * PAD);
-    drawAxisLabel("trục X", W / 2, H - PAD + 26);
+    drawAxisLabel(t("axis.x1"), W / 2, H - PAD + 26);
     ctx.save();
     ctx.translate(PAD - 28, H / 2);
     ctx.rotate(-Math.PI / 2);
-    drawAxisLabel("trục Y", 0, 0);
+    drawAxisLabel(t("axis.x2"), 0, 0);
     ctx.restore();
   }
 
@@ -478,7 +652,7 @@
       ctx.stroke();
       ctx.fillStyle = color;
       ctx.font = "bold 13px 'Segoe UI', Arial, sans-serif";
-      ctx.fillText("Cụm " + (j + 1), cx + 10, cy - 10);
+      ctx.fillText(t("cluster.n", { n: j + 1 }), cx + 10, cy - 10);
     }
     ctx.restore();
   }
@@ -517,14 +691,14 @@
     ctx.strokeStyle = "#ece8e8";
     ctx.lineWidth = 1;
     for (var i = 0; i <= 10; i++) {
-      var t = i / 10 * DOMAIN;
+      var g = i / 10 * DOMAIN;
       ctx.beginPath();
-      ctx.moveTo(sxMtn(0, t), syMtn(t, 0, zScale));
-      ctx.lineTo(sxMtn(DOMAIN, t), syMtn(t, 0, zScale));
+      ctx.moveTo(sxMtn(0, g), syMtn(g, 0, zScale));
+      ctx.lineTo(sxMtn(DOMAIN, g), syMtn(g, 0, zScale));
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(sxMtn(t, 0), syMtn(0, 0, zScale));
-      ctx.lineTo(sxMtn(t, DOMAIN), syMtn(DOMAIN, 0, zScale));
+      ctx.moveTo(sxMtn(g, 0), syMtn(0, 0, zScale));
+      ctx.lineTo(sxMtn(g, DOMAIN), syMtn(DOMAIN, 0, zScale));
       ctx.stroke();
     }
 
@@ -545,7 +719,7 @@
 
     if (!m) {
       for (i = N; i >= 0; i--) drawBucket(i);
-      drawAxisLabel("Chưa có mô hình — bấm “Khởi tạo cụm”", W / 2, 40);
+      drawAxisLabel(t("canvas.noModel"), W / 2, 40);
       return;
     }
 
@@ -594,13 +768,13 @@
       ctx.fillStyle = PALETTE[j3];
       ctx.font = "bold 13px 'Segoe UI', Arial, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("Cụm " + (j3 + 1), px, py - 10);
+      ctx.fillText(t("cluster.n", { n: j3 + 1 }), px, py - 10);
       ctx.textAlign = "left";
     }
 
-    drawAxisLabel("trục X", sxMtn(DOMAIN / 2, 0), MTN.baseY + 32);
-    drawAxisLabel("trục Y ↗", W - 12, syMtn(DOMAIN, 0, zScale) - 14, "right");
-    drawAxisLabel("độ cao = mật độ xác suất của GMM", W / 2, 28);
+    drawAxisLabel(t("axis.x1"), sxMtn(DOMAIN / 2, 0), MTN.baseY + 32);
+    drawAxisLabel(t("axis.x2arrow"), W - 12, syMtn(DOMAIN, 0, zScale) - 14, "right");
+    drawAxisLabel(t("canvas.height"), W / 2, 28);
   }
 
   // ------------------------------------------------------------------
@@ -635,7 +809,7 @@
     ctx.textAlign = "center";
     for (i = 0; i <= 10; i++) ctx.fillText(String(i), sx1d(i), baseY + 18);
     ctx.textAlign = "left";
-    drawAxisLabel("giá trị X — mỗi chấm tròn là một điểm dữ liệu", W / 2, H - 42);
+    drawAxisLabel(t("axis.1d"), W / 2, H - 42);
 
     var STEPS = 400, gridX = [], k = state.k;
     var maxTotal = 1e-9;
@@ -685,8 +859,7 @@
         else ctx.lineTo(sx1d(gridX[gx].x), pyT);
       }
       ctx.stroke();
-      drawAxisLabel("đường tím = mật độ GMM (tổng các chuông) · đường nét đứt = từng chuông",
-                    W / 2, 28);
+      drawAxisLabel(t("canvas.mountain1d"), W / 2, 28);
     } else if (state.model) {
       // --- dạng "khoanh vùng": dải μ ± 1σ và μ ± 2σ của từng cụm ---
       // đường mật độ GMM mờ phía sau để đối chiếu
@@ -730,10 +903,10 @@
         ctx.setLineDash([]);
         ctx.fillStyle = color;
         ctx.font = "bold 12.5px 'Segoe UI', Arial, sans-serif";
-        ctx.fillText("Cụm " + (j + 1) + "   μ=" + mu.toFixed(2) + "   σ=" + sd.toFixed(2) +
+        ctx.fillText(t("cluster.n", { n: j + 1 }) + "   μ=" + mu.toFixed(2) + "   σ=" + sd.toFixed(2) +
                      "   π=" + (state.model.w[j] * 100).toFixed(0) + "%", x2lo + 6, yTop - 7);
       }
-      drawAxisLabel("mỗi dải = vùng μ ± 1σ (đậm) và μ ± 2σ (nhạt) của một cụm · đường xám = mật độ GMM", W / 2, 28);
+      drawAxisLabel(t("canvas.bands1d"), W / 2, 28);
     }
 
     // điểm dữ liệu trên trục
@@ -771,22 +944,24 @@
     document.getElementById("stat-n").textContent = points().length;
     document.getElementById("stat-iter").textContent = state.iter;
     document.getElementById("stat-ll").textContent = state.ll === null ? "—" : fmt(state.ll, 4);
-    document.getElementById("message").textContent = state.message;
+    document.getElementById("message").textContent =
+      state.message ? t(state.message.key, state.message.params) : "";
     document.getElementById("btn-auto").textContent =
-      state.autoTimer ? "⏸ Dừng" : "▶ Tự động chạy";
+      state.autoTimer ? t("btn.stop") : t("btn.auto");
 
     var host = document.getElementById("params");
     if (!state.model) {
-      host.innerHTML = "<p class='note'>Chưa có mô hình. Thêm dữ liệu rồi bấm " +
-        "<b>Khởi tạo cụm</b>.</p>";
+      host.innerHTML = "<p class='note'>" + t("tbl.noModel") + "</p>";
       return;
     }
-    var html = "<table><thead><tr><th>Cụm</th>" +
-               "<th>π<small>trọng số</small></th>";
+    var center = "<small>" + t("tbl.center") + "</small>";
+    var std = "<small>" + t("tbl.std") + "</small>";
+    var html = "<table><thead><tr><th>" + t("tbl.cluster") + "</th>" +
+               "<th>π<small>" + t("tbl.weight") + "</small></th>";
     html += state.dim === "1d"
-      ? "<th>μ<small>tâm cụm</small></th><th>σ<small>độ lệch chuẩn</small></th>"
-      : "<th>μx<small>tâm cụm</small></th><th>μy<small>tâm cụm</small></th>" +
-        "<th>σx<small>độ lệch chuẩn</small></th><th>σy<small>độ lệch chuẩn</small></th>";
+      ? "<th>μ" + center + "</th><th>σ" + std + "</th>"
+      : "<th>μx" + center + "</th><th>μy" + center + "</th>" +
+        "<th>σx" + std + "</th><th>σy" + std + "</th>";
     html += "</tr></thead><tbody>";
     for (var j = 0; j < state.k; j++) {
       html += "<tr><td><span class='swatch' style='background:" + PALETTE[j] + "'></span>" +
@@ -809,11 +984,11 @@
   function updateHints() {
     var hint = document.getElementById("hint");
     if (state.dim === "1d") {
-      hint.textContent = "Nhấp vào vùng biểu đồ để thêm điểm dữ liệu quanh vị trí trục X đó.";
+      hint.textContent = t("hint.1d");
     } else if (state.view === "ellipse") {
-      hint.textContent = "Nhấp vào lưới để thêm điểm dữ liệu quanh vị trí đó.";
+      hint.textContent = t("hint.2dEllipse");
     } else {
-      hint.textContent = "Nhấp lên mặt sàn để thêm điểm; độ cao của núi chính là mật độ xác suất của GMM.";
+      hint.textContent = t("hint.2dMountain");
     }
   }
 
@@ -854,14 +1029,14 @@
 
   bindSegment("seg-dim", "dim", function () {
     stopAuto();
-    resetModel("Đã chuyển chế độ dữ liệu — hãy khởi tạo lại cụm.");
+    resetModel("msg.dimChanged");
   });
   bindSegment("seg-view", "view");
 
   document.getElementById("n-clusters").addEventListener("change", function (e) {
     stopAuto();
     state.k = parseInt(e.target.value, 10);
-    resetModel("Đã đổi số cụm — hãy khởi tạo lại.");
+    resetModel("msg.kChanged");
     render();
   });
 
@@ -870,14 +1045,14 @@
     stopAuto();
     if (!state.model) { initModel(); return; }
     eStep();
-    state.message = "Bước E: đã tính lại xác suất thuộc cụm cho từng điểm (màu chấm đổi theo).";
+    setMessage("msg.eStep");
     render();
   });
   document.getElementById("btn-m").addEventListener("click", function () {
     stopAuto();
     if (!state.model) { initModel(); return; }
     mStep();
-    state.message = "Bước M: đã cập nhật π, μ và độ lệch của từng cụm từ các xác suất vừa tính.";
+    setMessage("msg.mStep");
     render();
   });
   document.getElementById("btn-1").addEventListener("click", function () { runMany(1); });
@@ -887,14 +1062,28 @@
   document.getElementById("btn-clear").addEventListener("click", function () {
     stopAuto();
     if (state.dim === "1d") state.pts1d = []; else state.pts2d = [];
-    resetModel("Đã xoá toàn bộ dữ liệu.");
+    resetModel("msg.cleared");
     render();
   });
 
   // ------------------------------------------------------------------
   // Khởi động
   // ------------------------------------------------------------------
+  document.getElementById("seg-lang").addEventListener("click", function (ev) {
+    var btn = ev.target.closest("button");
+    if (!btn) return;
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function (b) {
+      b.classList.toggle("active", b === btn);
+    });
+    setLang(btn.dataset.value);
+  });
+
   setupCanvas();
+  Array.prototype.forEach.call(
+    document.querySelectorAll("#seg-lang button"), function (b) {
+      b.classList.toggle("active", b.dataset.value === lang);
+    });
+  applyStaticI18n();
   updateHints();
   loadSample();
 })();
