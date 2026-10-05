@@ -8,10 +8,8 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 # 2. Cài thư viện
 pip3 install -r requirements.txt
 
-# 3. Chạy (mặc định 2 cụm)
+# 3. Chạy
 python3 src/gmm_baihat.py
-python3 src/gmm_baihat.py -k 4         # đổi số cụm
-python3 src/gmm_baihat.py -k 2 3 4     # xếp nhiều biểu đồ để so sánh
 
 # 4. Xem vì sao chỉ dùng K-Means + tính mean/std là chưa đủ
 python3 src/kmeans_vs_gmm.py
