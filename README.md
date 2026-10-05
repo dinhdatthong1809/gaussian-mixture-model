@@ -16,6 +16,9 @@ python3 src/kmeans_vs_gmm.py
 
 # 5. Xem vì sao mỗi vòng lặp EM không bao giờ làm giảm log-likelihood
 python3 src/elbo_em.py
+
+# 6. GMM trên một tập con nhỏ của MNIST (lần đầu chạy sẽ tải ~11 MB về data/)
+python3 src/gmm_mnist.py
 ```
 
 ## Web app trực quan hoá GMM

@@ -5,3 +5,4 @@ __pycache__/
 models/*.joblib
 /.iml
 /.idea
+data/mnist.npz
