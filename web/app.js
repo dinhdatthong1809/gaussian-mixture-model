@@ -29,6 +29,7 @@
     prevLl: null,
     converged: false,
     autoTimer: null,
+    history: [],             // [{type:"E"|"M", ll, elbo}] để vẽ đồ thị ELBO
     message: null            // {key, params} để đổi ngôn ngữ vẫn dịch lại được
   };
 
@@ -91,6 +92,17 @@
       "hint.1d": "Click inside the chart to add datapoints around that position on the X1 axis.",
       "hint.2dEllipse": "Click on the grid to add datapoints around that position.",
       "hint.2dMountain": "Click on the floor to add points; the height of the mountains is the GMM probability density.",
+      "sec.elbo": "4. ELBO per step",
+      "elbo.empty": "Run EM to see the curve.",
+      "elbo.axis": "E / M half-steps",
+      "elbo.legendLl": "log-likelihood L(\u03b8)",
+      "elbo.legendElbo": "ELBO F(q, \u03b8)",
+      "elbo.legendE": "after E step",
+      "elbo.legendM": "after M step",
+      "elbo.afterE": "after the E step",
+      "elbo.afterM": "after the M step",
+      "elbo.gapNow": "Gap L − F {step}: {v} (= average KL between q and the true posterior).",
+      "elbo.note": "<b>E step</b> sets q to the exact posterior, so the gap KL(q‖p) drops to 0 and the ELBO rises until it touches L(\u03b8). <b>M step</b> maximises the ELBO over \u03c0, \u03bc, \u03a3, and since L(\u03b8) ≥ ELBO always, pushing the ELBO up drags L(\u03b8) up with it — the log-likelihood can never decrease.",
       "msg.added": "New points added — initialize the clusters again.",
       "msg.sample1d": "Loaded the energy scores of 20 songs (data/BaiHat.csv).",
       "msg.sample2d": "Loaded 200 sample points drawn from 3 clusters.",
@@ -154,6 +166,17 @@
       "hint.1d": "Nhấp vào vùng biểu đồ để thêm điểm dữ liệu quanh vị trí trục X1 đó.",
       "hint.2dEllipse": "Nhấp vào lưới để thêm điểm dữ liệu quanh vị trí đó.",
       "hint.2dMountain": "Nhấp lên mặt sàn để thêm điểm; độ cao của núi chính là mật độ xác suất của GMM.",
+      "sec.elbo": "4. ELBO qua từng bước",
+      "elbo.empty": "Chạy EM để thấy đường ELBO.",
+      "elbo.axis": "các nửa bước E / M",
+      "elbo.legendLl": "log-likelihood L(\u03b8)",
+      "elbo.legendElbo": "ELBO F(q, \u03b8)",
+      "elbo.legendE": "sau bước E",
+      "elbo.legendM": "sau bước M",
+      "elbo.afterE": "sau bước E",
+      "elbo.afterM": "sau bước M",
+      "elbo.gapNow": "Khoảng cách L − F {step}: {v} (= KL trung bình giữa q và hậu nghiệm thật).",
+      "elbo.note": "<b>Bước E</b> đặt q đúng bằng xác suất hậu nghiệm nên KL(q‖p) về 0, ELBO dâng lên chạm đúng L(\u03b8). <b>Bước M</b> cực đại hoá ELBO theo \u03c0, \u03bc, \u03a3; vì luôn có L(\u03b8) ≥ ELBO nên đẩy ELBO lên là kéo L(\u03b8) lên theo — log-likelihood không bao giờ giảm.",
       "msg.added": "Đã thêm điểm mới — hãy khởi tạo lại cụm.",
       "msg.sample1d": "Đã nạp điểm sôi động của 20 bài hát (data/BaiHat.csv).",
       "msg.sample2d": "Đã nạp 200 điểm mẫu từ 3 cụm.",
@@ -352,6 +375,7 @@
     state.ll = null;
     state.prevLl = null;
     state.converged = false;
+    state.history = [];
     setMessage(msgKey);
   }
 
@@ -403,6 +427,7 @@
     state.iter = 0;
     state.prevLl = null;
     state.converged = false;
+    state.history = [];
     eStep();
     setMessage("msg.initialized", { k: state.k });
     render();
@@ -413,6 +438,52 @@
     var m = values.reduce(function (a, b) { return a + b; }, 0) / values.length;
     var s = values.reduce(function (a, b) { return a + (b - m) * (b - m); }, 0);
     return s / (values.length - 1);
+  }
+
+
+  // ------------------------------------------------------------------
+  // Log-likelihood và ELBO
+  //   L(θ)      = (1/n) Σ_i log Σ_k π_k N(x_i | θ_k)
+  //   F(q, θ)   = (1/n) Σ_i Σ_k q_ik [ log π_k + log N(x_i | θ_k) − log q_ik ]
+  //   L(θ) − F(q, θ) = (1/n) Σ_i KL( q_i ‖ p(z_i | x_i, θ) ) ≥ 0
+  // ------------------------------------------------------------------
+  function logComponent(i, j, pts, m) {
+    return Math.log(Math.max(m.w[j], 1e-12)) + (state.dim === "1d"
+      ? logNormal1d(pts[i].x, m.mu[j], m.va[j])
+      : logNormal2d(pts[i].x, pts[i].y, m.mu[j], m.cov[j]));
+  }
+
+  function avgLogLik() {
+    var pts = points(), m = state.model;
+    if (!m || !pts.length) return null;
+    var total = 0;
+    for (var i = 0; i < pts.length; i++) {
+      var logp = [];
+      for (var j = 0; j < state.k; j++) logp.push(logComponent(i, j, pts, m));
+      total += logSumExp(logp);
+    }
+    return total / pts.length;
+  }
+
+  function avgElbo() {
+    var pts = points(), m = state.model, q = state.resp;
+    if (!m || !q || !pts.length) return null;
+    var total = 0;
+    for (var i = 0; i < pts.length; i++) {
+      for (var j = 0; j < state.k; j++) {
+        var qij = q[i][j];
+        if (qij <= 1e-12) continue;            // 0·log0 = 0
+        total += qij * (logComponent(i, j, pts, m) - Math.log(qij));
+      }
+    }
+    return total / pts.length;
+  }
+
+  /* Ghi lại trạng thái sau mỗi nửa bước để vẽ đường bậc thang ELBO */
+  function recordHistory(type) {
+    if (!state.model || !points().length) return;
+    state.history.push({ type: type, ll: avgLogLik(), elbo: avgElbo() });
+    if (state.history.length > 200) state.history.shift();
   }
 
   /* Bước E: tính xác suất (trách nhiệm) mỗi điểm thuộc từng cụm */
@@ -437,6 +508,7 @@
     state.resp = resp;
     state.prevLl = state.ll;
     state.ll = pts.length ? totalLl / pts.length : null;
+    recordHistory("E");
   }
 
   /* Bước M: cập nhật π, μ, σ/Σ từ các xác suất vừa tính */
@@ -479,6 +551,7 @@
       }
     }
     state.iter++;
+    recordHistory("M");
   }
 
   /* Một vòng lặp = bước M (dùng xác suất hiện có) + bước E (tính lại xác suất).
@@ -926,6 +999,132 @@
   // ------------------------------------------------------------------
   // Vẽ: điều phối + bảng tham số
   // ------------------------------------------------------------------
+
+  // ------------------------------------------------------------------
+  // Đồ thị nhỏ: ELBO và log-likelihood qua từng nửa bước E / M
+  // ------------------------------------------------------------------
+  var EW = 308, EH = 190;
+
+  function drawElboChart() {
+    var el = document.getElementById("elbo-canvas");
+    if (!el) return;
+    var c = el.getContext("2d");
+    var dpr = window.devicePixelRatio || 1;
+    if (el.width !== EW * dpr) {
+      el.width = EW * dpr;
+      el.height = EH * dpr;
+      el.style.width = EW + "px";
+    }
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, EW, EH);
+    c.fillStyle = "#ffffff";
+    c.fillRect(0, 0, EW, EH);
+
+    var h = state.history.slice(-40);   // chỉ vẽ 40 nửa bước gần nhất cho đỡ chen chúc
+    var gapEl = document.getElementById("elbo-gap");
+    if (h.length < 2) {
+      c.fillStyle = "#9aa5ad";
+      c.font = "12px 'Segoe UI', Arial, sans-serif";
+      c.textAlign = "center";
+      c.fillText(t("elbo.empty"), EW / 2, EH / 2);
+      c.textAlign = "left";
+      if (gapEl) gapEl.textContent = "";
+      return;
+    }
+
+    var padL = 44, padR = 10, padT = 14, padB = 26;
+    var lo = Infinity, hi = -Infinity;
+    h.forEach(function (p) {
+      [p.ll, p.elbo].forEach(function (v) {
+        if (v === null || !isFinite(v)) return;
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      });
+    });
+    if (!isFinite(lo) || !isFinite(hi)) return;
+    if (hi - lo < 1e-6) { hi += 0.05; lo -= 0.05; }
+    var span = hi - lo;
+    lo -= span * 0.12;
+    hi += span * 0.12;
+
+    var px = function (i) {
+      return padL + (h.length === 1 ? 0 : i / (h.length - 1)) * (EW - padL - padR);
+    };
+    var py = function (v) {
+      return EH - padB - (v - lo) / (hi - lo) * (EH - padT - padB);
+    };
+
+    // khung + nhãn trục
+    c.strokeStyle = "#e3dedd";
+    c.lineWidth = 1;
+    c.beginPath();
+    c.moveTo(padL, padT); c.lineTo(padL, EH - padB); c.lineTo(EW - padR, EH - padB);
+    c.stroke();
+    c.fillStyle = "#9aa5ad";
+    c.font = "9.5px 'Segoe UI', Arial, sans-serif";
+    c.textAlign = "right";
+    c.fillText(hi.toFixed(2), padL - 5, padT + 4);
+    c.fillText(lo.toFixed(2), padL - 5, EH - padB);
+    c.textAlign = "center";
+    c.fillText(t("elbo.axis"), (padL + EW - padR) / 2, EH - 7);
+    c.textAlign = "left";
+
+    // khoảng cách KL tại mỗi mốc: đoạn dọc mờ giữa ELBO và log-likelihood
+    c.strokeStyle = "#c9b8d8";
+    c.setLineDash([2, 2]);
+    h.forEach(function (p, i) {
+      if (p.ll === null || p.elbo === null) return;
+      c.beginPath();
+      c.moveTo(px(i), py(p.elbo));
+      c.lineTo(px(i), py(p.ll));
+      c.stroke();
+    });
+    c.setLineDash([]);
+
+    // đường log-likelihood (xanh teal, nét đứt)
+    c.strokeStyle = "#0d7c86";
+    c.lineWidth = 1.8;
+    c.setLineDash([5, 3]);
+    c.beginPath();
+    h.forEach(function (p, i) {
+      if (i === 0) c.moveTo(px(i), py(p.ll));
+      else c.lineTo(px(i), py(p.ll));
+    });
+    c.stroke();
+    c.setLineDash([]);
+
+    // đường ELBO (tím, liền nét)
+    c.strokeStyle = "#7c3aad";
+    c.lineWidth = 2.2;
+    c.beginPath();
+    h.forEach(function (p, i) {
+      if (i === 0) c.moveTo(px(i), py(p.elbo));
+      else c.lineTo(px(i), py(p.elbo));
+    });
+    c.stroke();
+
+    // mốc: bước E = hình tròn, bước M = hình vuông
+    h.forEach(function (p, i) {
+      var x = px(i), y = py(p.elbo);
+      c.fillStyle = p.type === "E" ? "#7c3aad" : "#d64550";
+      if (p.type === "E") {
+        c.beginPath();
+        c.arc(x, y, 3, 0, 2 * Math.PI);
+        c.fill();
+      } else {
+        c.fillRect(x - 2.6, y - 2.6, 5.2, 5.2);
+      }
+    });
+
+    var last = h[h.length - 1];
+    if (gapEl) {
+      gapEl.textContent = t("elbo.gapNow", {
+        v: Math.max(0, last.ll - last.elbo).toFixed(4),
+        step: last.type === "E" ? t("elbo.afterE") : t("elbo.afterM")
+      });
+    }
+  }
+
   function render() {
     clear();
     ctx.save();
@@ -934,6 +1133,7 @@
     else drawMountain2d();
     ctx.restore();
     updatePanel();
+    drawElboChart();
   }
 
   function fmt(v, digits) {
@@ -1077,6 +1277,8 @@
     });
     setLang(btn.dataset.value);
   });
+
+  window.gmmState = state;      // tiện mở console kiểm tra ELBO / tham số
 
   setupCanvas();
   Array.prototype.forEach.call(

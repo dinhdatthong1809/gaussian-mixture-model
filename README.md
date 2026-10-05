@@ -13,6 +13,9 @@ python3 src/gmm_baihat.py
 
 # 4. Xem vì sao chỉ dùng K-Means + tính mean/std là chưa đủ
 python3 src/kmeans_vs_gmm.py
+
+# 5. Xem vì sao mỗi vòng lặp EM không bao giờ làm giảm log-likelihood
+python3 src/elbo_em.py
 ```
 
 ## Web app trực quan hoá GMM

@@ -287,6 +287,49 @@ th:first-child, td:first-child { text-align: left; }
   vertical-align: middle;
 }
 
+.elbo canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.elbo-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.elbo-legend li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.elbo-legend .line {
+  width: 18px;
+  height: 0;
+  border-top-width: 2.5px;
+  border-top-style: solid;
+}
+
+.elbo-legend .elbo-line { border-top-color: #7c3aad; }
+.elbo-legend .ll-line { border-top-color: #0d7c86; border-top-style: dashed; }
+
+.elbo-legend .dot {
+  width: 7px;
+  height: 7px;
+}
+
+.elbo-legend .e-dot { background: #7c3aad; border-radius: 50%; }
+.elbo-legend .m-dot { background: #d64550; }
+
 .note {
   margin: 10px 0 0;
   font-size: 12.5px;
