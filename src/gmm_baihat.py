@@ -15,8 +15,9 @@ from sklearn.mixture import GaussianMixture
 
 ROOT = Path(__file__).resolve().parent.parent  # thư mục gốc của repo
 
+DATA_FILE = "BaiHat.csv"       # đổi thành "BaiHatLon.csv" (600 bài, sinh bởi src/tao_du_lieu.py)
 N_CLUSTERS = 2                 # đổi số cụm ở đây; đặt None để tự lấy k tốt nhất theo BIC
-K_RANGE = range(1, 7)          # dải k đem ra so sánh bằng AIC / BIC
+K_RANGE = range(1, 9)          # dải k đem ra so sánh bằng AIC / BIC
 TEST_POINTS = [5.8, 8.2]       # các điểm sôi động mới muốn thử với mô hình
 COLORS = ["red", "blue", "green", "orange", "purple"]
 LINE_STYLES = ["--", "-.", ":", (0, (5, 1, 1, 1)), (0, (3, 1, 3, 1, 1, 1))]
@@ -27,7 +28,7 @@ def normal_pdf(x, mu, sigma):
     return np.exp(-0.5 * ((x - mu) / sigma) ** 2) / (sigma * np.sqrt(2 * np.pi))
 
 
-df = pd.read_csv(ROOT / "data" / "BaiHat.csv")
+df = pd.read_csv(ROOT / "data" / DATA_FILE)
 X = df[["diemSoiDong"]].to_numpy()  # tập X 1 chiều, shape (n, 1)
 
 
@@ -53,7 +54,7 @@ scores = pd.DataFrame(scores)
 best_aic = int(scores.loc[scores["AIC"].idxmin(), "k"])
 best_bic = int(scores.loc[scores["BIC"].idxmin(), "k"])
 
-print("--- Phần 0: Chọn k theo AIC / BIC ---")
+print(f"--- Phần 0: Chọn k theo AIC / BIC ({DATA_FILE}, {len(X)} bài hát) ---")
 print(scores.to_string(index=False, float_format=lambda v: f"{v:9.3f}"))
 print(f"k tốt nhất theo AIC: {best_aic} | k tốt nhất theo BIC: {best_bic}")
 
@@ -107,7 +108,14 @@ print(f"\n--- Phần 1: Huấn luyện GMM {N_CLUSTERS} cụm ---")
 for k in range(N_CLUSTERS):
     print(f"Cụm {k + 1}: pi={weights[k]:.3f}  mu={means[k]:.3f}  sigma={stds[k]:.3f}")
 print(f"Hội tụ: {gmm.converged_} | log-likelihood trung bình: {gmm.score(X):.3f}")
-print(df.sort_values("diemSoiDong").to_string(index=False))
+if len(df) <= 40:
+    print(df.sort_values("diemSoiDong").to_string(index=False))
+else:
+    summary = (df.groupby("cum")["diemSoiDong"]
+                 .agg(so_bai="size", nho_nhat="min", trung_binh="mean", lon_nhat="max")
+                 .round(2))
+    print(summary.to_string())
+    print("(bảng chi tiết được rút gọn vì dữ liệu nhiều hơn 40 bài)")
 
 
 # ==========================================================

@@ -19,6 +19,10 @@ python3 src/elbo_em.py
 
 # 6. GMM trên một tập con nhỏ của MNIST (lần đầu chạy sẽ tải ~11 MB về data/)
 python3 src/gmm_mnist.py
+
+# 7. Sinh bộ dữ liệu 600 bài hát (4 cụm) để AIC/BIC đủ dữ liệu chọn k
+python3 src/tao_du_lieu.py
+# rồi đổi DATA_FILE thành "BaiHatLon.csv" trong src/gmm_baihat.py và chạy lại
 ```
 
 ## Web app trực quan hoá GMM
