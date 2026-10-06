@@ -1,5 +1,6 @@
 """GMM trên cột diemSoiDong của data/BaiHat.csv.
 
+Phần 0: chọn số cụm k tốt nhất theo AIC / BIC.
 Phần 1: huấn luyện mô hình.
 Phần 2: visualize chính mô hình vừa huấn luyện.
 Phần 3: đưa một điểm dữ liệu mới vào mô hình đó và xem đầu ra.
@@ -14,7 +15,8 @@ from sklearn.mixture import GaussianMixture
 
 ROOT = Path(__file__).resolve().parent.parent  # thư mục gốc của repo
 
-N_CLUSTERS = 2                 # đổi số cụm ở đây
+N_CLUSTERS = 2                 # đổi số cụm ở đây; đặt None để tự lấy k tốt nhất theo BIC
+K_RANGE = range(1, 7)          # dải k đem ra so sánh bằng AIC / BIC
 TEST_POINTS = [5.8, 8.2]       # các điểm sôi động mới muốn thử với mô hình
 COLORS = ["red", "blue", "green", "orange", "purple"]
 LINE_STYLES = ["--", "-.", ":", (0, (5, 1, 1, 1)), (0, (3, 1, 3, 1, 1, 1))]
@@ -25,12 +27,68 @@ def normal_pdf(x, mu, sigma):
     return np.exp(-0.5 * ((x - mu) / sigma) ** 2) / (sigma * np.sqrt(2 * np.pi))
 
 
+df = pd.read_csv(ROOT / "data" / "BaiHat.csv")
+X = df[["diemSoiDong"]].to_numpy()  # tập X 1 chiều, shape (n, 1)
+
+
+# ==========================================================
+# Phần 0: Chọn số cụm k theo AIC / BIC
+# ==========================================================
+# Thêm cụm thì log-likelihood LUÔN tăng, nên không thể chọn k bằng likelihood.
+# AIC và BIC cộng thêm một khoản phạt theo số tham số p = 3k - 1 (k mu + k sigma
+# + (k-1) trọng số độc lập):
+#     AIC = -2 * logLik + 2p
+#     BIC = -2 * logLik + p * ln(n)
+# Cả hai đều CÀNG NHỎ CÀNG TỐT. Với n >= 8 thì ln(n) > 2 nên BIC phạt nặng hơn
+# AIC, tức BIC thường chọn mô hình gọn hơn.
+
+scores = []
+for k in K_RANGE:
+    g = GaussianMixture(n_components=k, covariance_type="full",
+                        n_init=10, random_state=0).fit(X)
+    scores.append({"k": k, "p": 3 * k - 1, "logLik": g.score(X) * len(X),
+                   "AIC": g.aic(X), "BIC": g.bic(X)})
+
+scores = pd.DataFrame(scores)
+best_aic = int(scores.loc[scores["AIC"].idxmin(), "k"])
+best_bic = int(scores.loc[scores["BIC"].idxmin(), "k"])
+
+print("--- Phần 0: Chọn k theo AIC / BIC ---")
+print(scores.to_string(index=False, float_format=lambda v: f"{v:9.3f}"))
+print(f"k tốt nhất theo AIC: {best_aic} | k tốt nhất theo BIC: {best_bic}")
+
+if N_CLUSTERS is None:
+    N_CLUSTERS = best_bic
+    print(f"N_CLUSTERS = None -> dùng k tốt nhất theo BIC = {N_CLUSTERS}")
+elif N_CLUSTERS != best_bic:
+    print(f"Lưu ý: đang chạy với k = {N_CLUSTERS} trong khi BIC chọn k = {best_bic}.")
+
+# Vẽ đường AIC / BIC theo k, đánh dấu điểm cực tiểu
+fig_k, ax_k = plt.subplots(figsize=(8, 4.5))
+ax_k.plot(scores["k"], scores["AIC"], marker="o", color="#e08a1e", label="AIC")
+ax_k.plot(scores["k"], scores["BIC"], marker="s", color="#0d7c86", label="BIC")
+for name, k_best, color in [("AIC", best_aic, "#e08a1e"), ("BIC", best_bic, "#0d7c86")]:
+    y_best = float(scores.loc[scores["k"] == k_best, name].iloc[0])
+    ax_k.scatter([k_best], [y_best], s=180, facecolors="none",
+                 edgecolors=color, linewidths=2.5, zorder=5)
+    ax_k.annotate(f"{name} nhỏ nhất tại k={k_best}", xy=(k_best, y_best),
+                  xytext=(12, -20 if name == "AIC" else 14),
+                  textcoords="offset points", color=color, fontweight="bold")
+ax_k.set_xlabel("số cụm k")
+ax_k.set_ylabel("giá trị tiêu chí (càng nhỏ càng tốt)")
+ax_k.set_title("Chọn số cụm bằng AIC / BIC")
+ax_k.set_xticks(list(K_RANGE))
+ax_k.legend()
+ax_k.spines[["top", "right"]].set_visible(False)
+fig_k.tight_layout()
+k_path = ROOT / "gmm_baihat_aic_bic.png"
+fig_k.savefig(k_path, dpi=150)
+print(f"Đã lưu biểu đồ chọn k: {k_path}")
+
+
 # ==========================================================
 # Phần 1: Huấn luyện GMM
 # ==========================================================
-
-df = pd.read_csv(ROOT / "data" / "BaiHat.csv")
-X = df[["diemSoiDong"]].to_numpy()  # tập X 1 chiều, shape (n, 1)
 
 gmm = GaussianMixture(n_components=N_CLUSTERS, covariance_type="full", random_state=0)
 gmm.fit(X)
@@ -45,7 +103,7 @@ weights, means, stds = weights[order], means[order], stds[order]
 remap = {old: new + 1 for new, old in enumerate(order)}
 df["cum"] = [remap[l] for l in gmm.predict(X)]
 
-print(f"--- Phần 1: Huấn luyện GMM {N_CLUSTERS} cụm ---")
+print(f"\n--- Phần 1: Huấn luyện GMM {N_CLUSTERS} cụm ---")
 for k in range(N_CLUSTERS):
     print(f"Cụm {k + 1}: pi={weights[k]:.3f}  mu={means[k]:.3f}  sigma={stds[k]:.3f}")
 print(f"Hội tụ: {gmm.converged_} | log-likelihood trung bình: {gmm.score(X):.3f}")
